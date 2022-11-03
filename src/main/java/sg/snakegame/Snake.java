@@ -14,9 +14,9 @@ public class Snake {
     public Snake(){
         this.imageFile = new Image("file:dot.png");
         this.image = new ImageView(this.imageFile);
-        this.xPos = 100;
-        this.yPos = 100;
-        this.verticalDistanceToMove = 0;
+        this.xPos = 300;
+        this.yPos = 300;
+        this.verticalDistanceToMove = -10; // Start the game going up by default.
         this.horizontalDistanceToMove = 0;
 
     }

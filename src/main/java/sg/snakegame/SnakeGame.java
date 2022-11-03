@@ -1,35 +1,24 @@
 /*
-DONE:   Add walls
-DONE:   Add scoreboard
-DONE:   Add food
-TODO:   Add additional segments
-TODO:   Collisions with:
-TODO:       self
-DONE:       wall
-DONE:       food
-TODO:   Play again
+
 TODO:   High score
-TODO:   Move forward on own
-DONE:   Don't allow direction to reverse
-DONE:   Move food when eaten
-TODO:   Don't let food spawn on walls (DONE) or snake (NEED)
 TODO:   Increase speed after food is eaten
 TODO:   Add more levels after X points
+TODO:   Add multiplayer
 
  */
 
-
-
-
 package sg.snakegame;
 
+import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
-
+import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SnakeGame extends Application {
     @Override
@@ -37,11 +26,12 @@ public class SnakeGame extends Application {
         System.out.println("Hello World");
 
         double moveIncrement = 10;
-        double startingXPos = 100;
-        double startingYPos = 100;
+        double startingXPos = 300;
+        double startingYPos = 300;
         double windowHeight = 600;
         double windowWidth = 600;
-        boolean gameIsOn = true;
+        final int[] timesPlayed = {0};
+        final boolean[] gameIsOn = {false};
 
         ArrayList<Snake> segments = new ArrayList<>();
         ArrayList<Obstacle> obstacles = new ArrayList<>();
@@ -54,98 +44,112 @@ public class SnakeGame extends Application {
 
         ScoreBoard scoreBoard = new ScoreBoard();
         scoreBoard.generateScoreBoard();
+        scoreBoard.startingInstructions();
 
         pane.getChildren().add(scoreBoard.getScoreBoard());
-
-
-        ui.generateSnake(segments);
-        ui.addSegmentsToScreen(segments, pane);
-        ui.setStartingPositions(segments,pane);
-        ui.generateWalls(obstacles, pane);
-
         Food food = new Food();
-        pane.getChildren().add(food.getFood());
+
+        startGame(pane,  scoreBoard, segments, ui, food, obstacles);
+        scoreBoard.startingInstructions();
+
         food.getFood().setTranslateX(food.getXPos());
         food.getFood().setTranslateY(food.getYPos());
 
         Scene scene = new Scene(pane);
 
+        Map<KeyCode, Boolean> pressedKeys = new HashMap<>();
+        scene.setOnKeyPressed(event -> pressedKeys.put(event.getCode(), Boolean.TRUE));
+        scene.setOnKeyReleased(event -> pressedKeys.put(event.getCode(), Boolean.FALSE));
 
-
-        scene.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.LEFT) {
-                if(!(segments.get(0).getHorizontalDistanceToMove() ==moveIncrement)){
-                    segments.get(0).setHorizontalDistanceToMove(-moveIncrement);
-                    segments.get(0).setVerticalDistanceToMove(0);
-                }
-            }
-
-            if (event.getCode() == KeyCode.RIGHT) {
-                if(!(segments.get(0).getHorizontalDistanceToMove() ==-moveIncrement)){
-                    segments.get(0).setHorizontalDistanceToMove(moveIncrement);
-                    segments.get(0).setVerticalDistanceToMove(0);
-                }
-            }
-
-
-            if (event.getCode() == KeyCode.UP) {
-                if(!(segments.get(0).getVerticalDistanceToMove() == moveIncrement)){
-                    segments.get(0).setHorizontalDistanceToMove(0);
-                    segments.get(0).setVerticalDistanceToMove(-moveIncrement);
-                }
-            }
-
-            if (event.getCode() == KeyCode.DOWN) {
-                if(!(segments.get(0).getVerticalDistanceToMove() == -moveIncrement)) {
-                    segments.get(0).setHorizontalDistanceToMove(0);
-                    segments.get(0).setVerticalDistanceToMove(moveIncrement);
-                }
-            }
-
-            if (event.getCode() == KeyCode.ENTER) {
-
-                if (ui.checkForCollisionWithWalls(segments)) {
-
-                } else {
-
-                    int numberOfSegments = segments.size() - 1;
-                    System.out.println(numberOfSegments);
-
-                    while (numberOfSegments > 0) {
-                        segments.get(numberOfSegments).getSegment().setTranslateY(segments.get(numberOfSegments - 1).getYPos());
-                        segments.get(numberOfSegments).getSegment().setTranslateX(segments.get(numberOfSegments - 1).getXPos());
-                        segments.get(numberOfSegments).updateYPos(segments.get(numberOfSegments).getSegment().getTranslateY());
-                        segments.get(numberOfSegments).updateXPos(segments.get(numberOfSegments).getSegment().getTranslateX());
-                        numberOfSegments--;
+        new AnimationTimer(){
+            @Override
+            public void handle (long now) {
+//                    if(pressedKeys.getOrDefault(KeyCode.SPACE, false)) {
+//                        ui.addSegment(segments, pane);
+//                    }
+                    if(pressedKeys.getOrDefault(KeyCode.LEFT, false)) {
+                        if (!(segments.get(0).getHorizontalDistanceToMove() == moveIncrement)) {
+                            segments.get(0).setHorizontalDistanceToMove(-moveIncrement);
+                            segments.get(0).setVerticalDistanceToMove(0);
+                        }
+                    }
+                    if(pressedKeys.getOrDefault(KeyCode.RIGHT, false)) {
+                        if (!(segments.get(0).getHorizontalDistanceToMove() == -moveIncrement)) {
+                            segments.get(0).setHorizontalDistanceToMove(moveIncrement);
+                            segments.get(0).setVerticalDistanceToMove(0);
+                        }
+                    }
+                    if(pressedKeys.getOrDefault(KeyCode.UP, false)) {
+                        if (!(segments.get(0).getVerticalDistanceToMove() == moveIncrement)) {
+                            segments.get(0).setHorizontalDistanceToMove(0);
+                            segments.get(0).setVerticalDistanceToMove(-moveIncrement);
+                        }
+                    }
+                    if(pressedKeys.getOrDefault(KeyCode.DOWN, false)) {
+                        if (!(segments.get(0).getVerticalDistanceToMove() == -moveIncrement)) {
+                            segments.get(0).setHorizontalDistanceToMove(0);
+                            segments.get(0).setVerticalDistanceToMove(moveIncrement);
+                        }
                     }
 
-                    segments.get(0).getSegment().setTranslateY(segments.get(0).getYPos() + segments.get(0).getVerticalDistanceToMove());
-                    segments.get(0).updateYPos(segments.get(0).getSegment().getTranslateY());
-                    segments.get(0).getSegment().setTranslateX(segments.get(0).getXPos() + segments.get(0).getHorizontalDistanceToMove());
-                    segments.get(0).updateXPos(segments.get(0).getSegment().getTranslateX());
-                }
+//                    if(pressedKeys.getOrDefault(KeyCode.F, false)) {
+//                        ui.moveFood(segments, food);
+//                    }
+
+                    if (pressedKeys.getOrDefault(KeyCode.ENTER, false)) {
+                        if(!(gameIsOn[0])) {
+                            startGame(pane, scoreBoard, segments, ui, food, obstacles);
+
+                            if(timesPlayed[0] >0){
+                                ui.moveFood(segments, food);
+                            }
+                            timesPlayed[0]++;
+
+                            gameIsOn[0] = true;
+                        }
+                    }
+
+                    if(gameIsOn[0]) {
+                        if (ui.checkForCollisionWithWalls(segments)) {
+                            System.out.println("GAME OVER");
+                            gameIsOn[0] = false;
+                            scoreBoard.gameOver();
+                        } else {
+                            ui.moveSnakeForward(segments);
+                        }
+
+                        ui.checkForCollisionWithFood(segments, food, scoreBoard, pane);
+                        System.out.println("X-POS: " + segments.get(0).getXPos());
+                        System.out.println("Y-POS: " + segments.get(0).getYPos());
+
+                        try {
+                            Thread.sleep(70);
+                        } catch (InterruptedException ex) {
+                            ex.printStackTrace();
+                        }
+                    }
             }
-            ui.checkForCollisionWithFood(segments, food, scoreBoard);
-            System.out.println("X-POS: " + segments.get(0).getXPos());
-            System.out.println("Y-POS: " + segments.get(0).getYPos());
-
-
-
-        });
-
-
-
-
-        stage.setScene(scene);
-        stage.show();
-
-
-
-
-
-    }
+            }.start();
+            stage.setScene(scene);
+            stage.show();
+        }
 
     public static void main(String[] args) {
         launch();
+    }
+
+    public void startGame(@NotNull Pane pane, @NotNull ScoreBoard scoreBoard, @NotNull ArrayList<Snake> segments,
+                          @NotNull UI ui, @NotNull Food food, @NotNull ArrayList<Obstacle> obstacles){
+        pane.getChildren().clear();
+        scoreBoard.resetScore();
+        segments.clear();
+        ui.generateSnake(segments);
+        ui.addSegmentsToScreen(segments, pane);
+        ui.setStartingPositions(segments);
+        obstacles.clear();
+        ui.generateWalls(obstacles, pane);
+        pane.getChildren().add(scoreBoard.getScoreBoard());
+        pane.getChildren().add(food.getFood());
+
     }
 }
